@@ -3,7 +3,8 @@
 /*======================================================================*/
 #include "encoding.h"
 #include "util.h"
-#include "FIR_COEFFS.h"
+// #include "FIR_COEFFS.h"
+#include "fir_insns.h"
 
 void init_csrs()
 {
@@ -14,6 +15,58 @@ void init_csrs()
     write_csr(mideleg, 0);
     write_csr(medeleg, 0);
 }
+
+int main()
+{
+    init_csrs();
+
+    int res = 0;
+    int fifty = 50;
+
+    #define FX     0
+    res = 0;
+    FIR_FX_INSTRUCTION(&res, fifty, FX);
+    printf("FX = %d   --   res = %d \n", FX, res);
+
+    #define FX     1
+    res = 0;
+    FIR_FX_INSTRUCTION(&res, fifty, FX);
+    printf("FX = %d   --   res = %d \n", FX, res);
+
+    #define FX     2
+    res = 0;
+    FIR_FX_INSTRUCTION(&res, fifty, FX);
+    printf("FX = %d   --   res = %d \n", FX, res);  
+
+    #define FX     3
+    res = 0;
+    FIR_FX_INSTRUCTION(&res, fifty, FX);
+    printf("FX = %d   --   res = %d \n", FX, res);
+
+    #define FX     4
+    res = 0;
+    FIR_FX_INSTRUCTION(&res, fifty, FX);
+    printf("FX = %d   --   res = %d \n", FX, res);  
+
+    #define FX     5
+    res = 0;
+    FIR_FX_INSTRUCTION(&res, fifty, FX);
+    printf("FX = %d   --   res = %d \n", FX, res);
+
+    #define FX     6
+    res = 0;
+    FIR_FX_INSTRUCTION(&res, fifty, FX);
+    printf("FX = %d   --   res = %d \n", FX, res);  
+
+    #define FX     7
+    res = 0;
+    FIR_FX_INSTRUCTION(&res, 50, FX);
+    printf("FX = %d   --   res = %d \n", FX, res);  
+
+    return 0;
+}
+
+/*
 
 #define OSCILLO_BASE 0x82000000
 
@@ -53,20 +106,22 @@ int main(int argc, char** argv)
     printf("[BAREMETAL - INFO / OUTPUT] out_n_rows       = %d \n", *pt_out_n_rows);
     printf("[BAREMETAL - INFO / OUTPUT] out_data[0]      = 0x%x \n", *pt_out_data);
 
-    int i, j;
+    volatile int i, j;
     for(i = 0; i< *(pt_in_n_rows); i++)
     {
         Yn = 0;
         XnBuffer[0] = *(pt_in_data + i);
+        uint64_t t_0 = rdcycle();
 
         //printf("input[ %d ] = 0x%x \n", i, *(pt_in_data + i));
         for ( j = N-1; j >=0 ; j-- ){
-            // Yn = Yn + ((h[j] * XnBuffer[j]) >> 8);
             Yn = (uint32_t)(Yn + ((uint32_t)h[j] * (uint32_t)XnBuffer[j]));
-
             XnBuffer[j+1] = XnBuffer[j];
             // N+1 -> N   poubelle
         }
+
+        t_0 = rdcycle() - t_0;
+        //printf("cycles [ %d ] = %d \n", i, t_0);
 
         // Output on 8 bits
         *(pt_out_data + i) = (Yn >> 12);
@@ -76,7 +131,7 @@ int main(int argc, char** argv)
     printf("Waiting ... \n");
     volatile int k = 1000;
     while(k--);
-        //        printf("NONE  --- Hello world @%d \n", k);
 
     return 0;
 }
+*/
