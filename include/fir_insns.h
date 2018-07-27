@@ -2,10 +2,14 @@
 #define FIR_FX_H_
 
 #define STR1(x) #x
-#ifndef STR
 #define STR(x) STR1(x)
-#endif
 #define EXTRACT(a, size, offset) (((~(~0 << size) << offset) & a) >> offset)
+
+#define CUSTOMX_OPCODE(x) CUSTOM_ ## x
+#define CUSTOM_0 0b0001011
+#define CUSTOM_1 0b0101011
+#define CUSTOM_2 0b1011011
+#define CUSTOM_3 0b1111011
 
 // rd = rs2[offset + size - 1 : offset]
 // rs1 is clobbered
@@ -18,19 +22,14 @@
 //   and x ## rd, x ## rs1, x ## rs2;              \
 //   srai x ## rd, x ## rd, offset;
 
-#define XCUSTOM_OPCODE(x) XCUSTOM_OPCODE_ ## x
-#define XCUSTOM_OPCODE_0 0b0001011
-#define XCUSTOM_OPCODE_1 0b0101011
-#define XCUSTOM_OPCODE_2 0b1011011
-#define XCUSTOM_OPCODE_3 0b1111011
 
-#define FIR_OPCODE      XCUSTOM_OPCODE_3
+
+#define FIR_OPCODE      CUSTOM_0
 
 #define FIR_FX(rd, rs1, rs2, funct)         \
   FIR_OPCODE                         |         \
   (rd                   << (7))       |         \
   (0x3                  << (7+5))     |         \
-  ((rd != 0) & 1        << (7+5+2))   |         \
   (rs1                  << (7+5+3))   |         \
   (rs2                  << (7+5+3+5)) |         \
   (EXTRACT(funct, 7, 0) << (7+5+3+5+5))
@@ -75,6 +74,27 @@
 //     rd = rd_;                                                           \
 //   }
 
+#define CUSTOMX(X, rd, rs1, rs2, funct)         \
+  CUSTOMX_OPCODE(X)                   |         \
+  (rd                   << (7))       |         \
+  (0x3                  << (7+5))     |         \
+  (rs1                  << (7+5+3))   |         \
+  (rs2                  << (7+5+3+5)) |         \
+  (EXTRACT(funct, 7, 0) << (7+5+3+5+5))
+
+#define ROCC_INSTRUCTION_R_R_R(X, rd, rs1, rs2, funct, rd_n, rs1_n, rs2_n) {              \
+    register unsigned long int rd_  asm ("x" # rd_n);                                     \
+    register unsigned long int rs1_ asm ("x" # rs1_n) = (unsigned long int) rs1;          \
+    register unsigned long int rs2_ asm ("x" # rs2_n) = (unsigned long int) rs2;          \
+    asm volatile (                                                      \
+        ".word " STR(CUSTOMX(X, rd_n, rs1_n, rs2_n, funct)) "\n\t"      \
+        : "=r" (rd_)                                                    \
+        : [_rs1] "r" (rs1_), [_rs2] "r" (rs2_)                          \
+        : "cc"                                                          \
+        );                                                              \
+    rd = rd_;                                                           \
+  }
+
 #define FIR_FX_INSTRUCTION_X_R_R(rs1, rs2, funct, rs1_n, rs2_n)  \
   {                                                               \
     register unsigned long int rs1_ asm ("x" # rs1_n) = (unsigned long int) rs1;    \
@@ -87,5 +107,8 @@
 
 #define FIR_FX_INSTRUCTION(rs1, rs2, funct)                \
   FIR_FX_INSTRUCTION_X_R_R(rs1, rs2, funct, 5, 6)
+
+#define ROCC_INSTRUCTION(X, rd, rs1, rs2, funct)                \
+  ROCC_INSTRUCTION_R_R_R(X, rd, rs1, rs2, funct, 5, 6, 7)
 
 #endif  // FIR_FX_H_
