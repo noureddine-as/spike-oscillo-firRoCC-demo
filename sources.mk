@@ -3,7 +3,9 @@ SOURCES = $(SRC_DIR)entry.S \
 			$(SRC_DIR)main.c \
 			$(SRC_DIR)syscalls.c \
 			$(SRC_DIR)trap_handler.c \
- 			$(SRC_DIR)oscillo.s \
+ 			$(SRC_DIR)oscillo_random_sin.s \
+# 			$(SRC_DIR)oscillo_modulo8.s \
+# 			$(SRC_DIR)oscillo_sinHF_sinBF.s \
 
 INCLUDES = -I./include
 

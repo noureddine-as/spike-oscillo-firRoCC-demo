@@ -2,17 +2,15 @@ clear all;
 close();
 // Configure script-- ----------------------------------------------------------
 
-// What it plots
-plot_coeffs = "1";
-plot_global = "1";
-plot_zoom   = "0";
-
 // Which input it uses
 // Choose ONE
-signal = "sinus sum";
+//signal = "sinus sum";
 //signal = "impulse";
 //signal = "square";
 //signal = "constant";
+//signal = "modulo8"
+//signal = "sin_random"
+signal ="step_signal"
 
 // Which filter it uses
 // Choose One
@@ -42,14 +40,9 @@ Amp = 110 ;
 t = 0:step:tmax-1 ;
 
 func1 = round(   Amp     *  ( sin(     2*%pi*t/Tper    )  + 1 )  );
-// func2 = round( (Amp/12)  *  ( sin(  2*%pi*t/(Tper/20)  )  + 1 )  );
-func2 = rand(1, tmax)*35;
+func2 = round( (Amp/12)  *  ( sin(  2*%pi*t/(Tper/20)  )  + 1 )  );
 
-//figure();
-//plot( t , func2 , '-g') ;
-//title("Random signal");
-//set(gca(),"grid",[1 1]);
-
+random_func2 = rand(1, tmax)*35;
 
 // Input 1
 sinus_sum = func1 + func2;
@@ -68,6 +61,32 @@ square_signal = [ square_signal ones( 1 , tmax - size( square_signal , 2 ) ) ];
 // Input 4
 cts = Amp * ones( 1 , tmax );
 
+//input 5
+modulo8_signal = t;
+for i=1:tmax
+    modulo8_signal(i) = (256 / 8)*modulo(i,9);
+    if modulo8_signal(i) == 256 then  
+        modulo8_signal(i) = 255;
+    end
+end
+
+// Input 6
+sin_random = func1 + random_func2
+
+//input 7
+step_signal = t;
+for i=1:tmax
+    j = modulo(i,17);
+    if(j > 12)
+        step_signal(i) = 255 - 16*(j);
+    elseif(j < 4)
+        step_signal(i) = 16*(16 - j);
+    else
+        step_signal(i) = 255 - 16*j;
+    end;
+end
+
+
 // Selects one of the inputs
 if     signal == "sinus sum" then
     input_signal = sinus_sum;
@@ -77,6 +96,12 @@ elseif signal == "square" then
     input_signal = square_signal;
 elseif signal == "constant" then
     input_signal = cts;
+elseif signal == "modulo8"
+    input_signal = modulo8_signal
+elseif signal == "sin_random"
+    input_signal = sin_random
+elseif signal == "step_signal"
+    input_signal = step_signal
 else // then // DEFAULT
     input_signal = impulse;
 end
@@ -87,8 +112,28 @@ padding = [ 1 zeros( 1 , n ) ]; // Filter FIR fixed
 
 output_signal = filter( coeffs , padding , input_signal ) ;
 
+// Plot Input/Output -----------------------------------------------------------
+
+// Global Vision
+plot_global = "1"
+if plot_global == "1" then
+    
+    figure()
+    subplot( 2 , 1 , 1 );
+    plot( t , input_signal , '-b') ;
+    title("Input signal complete");
+    set(gca(),"grid",[1 1]);
+    
+    subplot( 2 , 1 , 2 );
+    plot( t , output_signal , '-r' ) ;
+    title("Output signal global");
+    set(gca(),"grid",[1 1]);
+end
+
+
 // OUTPUT TO file --------------------------------------------------------------
-output_file = "Fixed"
+// output_file = "Fixed"; //""Fixed"
+output_file = "Fixed"; //""Fixed"
 
 if output_file == "Floating"
     
@@ -137,10 +182,11 @@ if output_file == "Floating"
     mfprintf(fid,'%f };\n', output_signal(N));
     mclose(fid);
 
-else  // FIXED-POINT
+elseif output_file == "Fixed"  // FIXED-POINT
     
     COEFF_PATH = "include/FIR_COEFFS.h"
-    OSCILLO_PATH = "src/oscillo.s"
+    OSCILLO_PATH = "src/oscillo_solution.s"
+    OUTPUT_BYTES = 1
     
     // EXPORTING THE COEFFS
     N = size(coeffs)(2);
@@ -171,23 +217,25 @@ else  // FIXED-POINT
     mfprintf(fid, '# Output signal samples \n#define    Ny     %d\n\n', Ny);
     mfprintf(fid, '\nout_n_rows:\n  .half 0x%04x \nout_data: \n', Ny);
   
-      // OUTPUT_BYTES = 1, All Zeros;
-    for i = 1:Ny
-        mfprintf(fid,'  .byte 0x%02x\n', 0); //output_signal(i) / (2**(16)) );
+    if(OUTPUT_BYTES == 0) then
+        // OUTPUT_BYTES = 0, All Zeros;
+        for i = 1:Ny
+            mfprintf(fid,'  .byte 0x%02x\n', 0); //output_signal(i) / (2**(16)) );
+        end
+    end
+    if (OUTPUT_BYTES == 1) then
+          // OUTPUT_BYTES = 1;
+        for i = 1:Ny
+            mfprintf(fid,'  .byte 0x%02x\n', bin2dec(dec2bin(uint64(output_signal(i)/ (2**(12))) , 64)) );
+        end
+    end
+    if (OUTPUT_BYTES == 2) then
+          // OUTPUT_BYTES = 1;
+        for i = 1:Ny
+            mfprintf(fid,'  .byte 0x%02x\n',output_signal(i) / (2**(16)) );
+        end
     end
   
-//    // OUTPUT_BYTES = 1;
-//    for i = 1:Ny
-//        mfprintf(fid,'  .byte 0x%02x\n',output_signal(i) / (2**(16)) );
-//    end
-    
-    // OUTPUT_BYTES = 2;
-//    for i = 1:Ny
-//        mfprintf(fid,'  .half 0x%02x\n',output_signal(i) / (2**(8)) );
-//    end
-//    
-    //mfprintf(fid,'%f };\n', coeffs(N));
     mclose(fid);
-    
 
 end

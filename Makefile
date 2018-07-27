@@ -32,7 +32,7 @@ DUMPER = $(RISCV)/bin/riscv64-unknown-elf-objdump
 SIZE = $(RISCV)/bin/riscv64-unknown-elf-size
 GDB = $(RISCV)/bin/riscv64-unknown-elf-gdb
 SPIKE = $(RISCV)/bin/spike
-C_EMULATOR = ../../emulator/emulator-freechips.rocketchip.system-DefaultConfig
+C_EMULATOR = ../../emulator/emulator-firrocc
 RBB_C_EMULATOR = ../../emulator/emulator-freechips.rocketchip.system-DefaultConfigRBB
 
 OPENOCD = $(RISCV)/bin/openocd
