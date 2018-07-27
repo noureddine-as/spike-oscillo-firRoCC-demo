@@ -111,4 +111,40 @@
 #define ROCC_INSTRUCTION(X, rd, rs1, rs2, funct)                \
   ROCC_INSTRUCTION_R_R_R(X, rd, rs1, rs2, funct, 5, 6, 7)
 
+
+#define F_MOVE   0
+#define F_FIFO   1
+#define F_STORE   2
+
+#define FIR_REG_PRECISION_REGISTER      32
+#define FIR_REG_STATUS_REGISTER         33
+#define FIR_REG_RESULT_REGISTER         34
+
+#define FIR_ENABLE_CALC 0x01
+#define FIR_ENABLE_INT  0x02
+#define FIR_DONE_BIT    (0x01 << 31)
+
+void fir_move(uint64_t value, uint64_t reg_file)
+{
+    //FIR_FX_INSTRUCTION(value, reg_file, F_MOVE);  
+    
+    uint64_t y;
+    ROCC_INSTRUCTION(0, y, value, reg_file, F_MOVE);  
+}
+
+void fir_fifo(uint64_t value)
+{
+    //FIR_FX_INSTRUCTION(value, 0, F_FIFO);
+
+    uint64_t y;
+    ROCC_INSTRUCTION(0, y, value, 0, F_FIFO);  
+}
+
+void fir_store(volatile uint64_t* addr, uint64_t reg_file)
+{
+    //FIR_FX_INSTRUCTION(addr, reg_file, F_STORE);
+    uint64_t y;
+    ROCC_INSTRUCTION(0, y, addr, reg_file, F_STORE);  
+}
+
 #endif  // FIR_FX_H_

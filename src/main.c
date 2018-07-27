@@ -24,50 +24,8 @@ void init_csrs()
 
 }
 
-
 #define OSCILLO_BASE 0x82000000
 
-#define F_MOVE   0
-#define F_FIFO   1
-#define F_STORE   2
-
-#define FIR_REG_PRECISION_REGISTER      32
-#define FIR_REG_STATUS_REGISTER         33
-#define FIR_REG_RESULT_REGISTER         34
-
-#define FIR_ENABLE_CALC 0x01
-#define FIR_ENABLE_INT  0x02
-#define FIR_DONE_BIT    (0x01 << 31)
-
-void fir_move(uint64_t value, uint64_t reg_file)
-{
-    //FIR_FX_INSTRUCTION(value, reg_file, F_MOVE);  
-    
-    uint64_t y;
-    ROCC_INSTRUCTION(0, y, value, reg_file, F_MOVE);  
-}
-
-void fir_fifo(uint64_t value)
-{
-    //FIR_FX_INSTRUCTION(value, 0, F_FIFO);
-
-    uint64_t y;
-    ROCC_INSTRUCTION(0, y, value, 0, F_FIFO);  
-}
-
-void fir_store(uint64_t* addr, uint64_t reg_file)
-{
-    //FIR_FX_INSTRUCTION(addr, reg_file, F_STORE);
-    uint64_t y;
-    ROCC_INSTRUCTION(0, y, addr, reg_file, F_STORE);  
-}
-
-// #define N 32
-// unsigned long int h[N] = 
-// {
-//   0x00d0000000000000,0x0150000000000000,0x01f0000000000000,0x02c0000000000000,0x03c0000000000000,0x04d0000000000000,0x0610000000000000,0x0750000000000000,0x08a0000000000000,0x09f0000000000000,0x0b30000000000000,0x0c50000000000000,0x0d40000000000000,0x0e10000000000000,0x0e90000000000000,0x0ee0000000000000,
-//   0x0ee0000000000000,0x0e90000000000000,0x0e10000000000000,0x0d40000000000000,0x0c50000000000000,0x0b30000000000000,0x09f0000000000000,0x08a0000000000000,0x0750000000000000,0x0610000000000000,0x04d0000000000000,0x03c0000000000000,0x02c0000000000000,0x01f0000000000000,0x0150000000000000,0x00d0000000000000 
-// };
 
 
 int main()
@@ -91,55 +49,28 @@ int main()
     // // Filling out the Coeffs reg_file of RoCC
     for(int i=0; i<N; i++)
     {
-        //FIR_FX_INSTRUCTION(h[i], i, F_MOVE);
-
-        printf("H[ %d ] = 0x%lx \n", i, ((uint64_t)h[i]) << (16 * 3));
-        fir_move(((uint64_t)h[i]) << (16 * 3) , i); //*/, (uint64_t)i);
-        // fir_move(h[i] , i); //*/, (uint64_t)i);
+        fir_move(((uint64_t)h[i]) << (16 * 3) , i);
     }
-        
 
     fir_move((uint64_t)0x0000000000000000, FIR_REG_PRECISION_REGISTER);
 
-uint64_t y;
     // // pushing only one sample a time
     volatile uint64_t result_i, done;
-    volatile int j;
-    //for(int i = 0; i <  *pt_in_n_rows; i++)
     for(int i = 0; i < *pt_in_n_rows; i++)
-    {
-        
-        //fir_fifo(in_signal[i]); // */);
-        
+    {       
         fir_fifo(((uint64_t)(*(pt_in_data  + i ))) << (16 * 3)); // */);
-        //printf("X[ %d ] = 0x%lx \n", i, ((uint64_t)h[i]) << (16 * 3));
-
-        //fir_fifo((uint64_t)(*(pt_in_data  + i ))); // */);
-
         fir_move(FIR_ENABLE_CALC , FIR_REG_STATUS_REGISTER);
-
         fir_store(&done, FIR_REG_STATUS_REGISTER);
         while(!(done & 0x8000000000000000)){
-            //printf("Trying to read %lx \n", done);
-            //ROCC_INSTRUCTION(0, y, &done, 33, F_STORE) // ROCC_INSTRUCTION(0, y, &status_read, 33, S_STR)
             fir_store(&done, FIR_REG_STATUS_REGISTER);
-            //printf("done = %lx\n", done);
-            //printf("******** FIR operation NOT YET done. \n");
         }
-       // printf("that was done !\n", done);
-    // ROCC_INSTRUCTION(0, y, &result_i, 34, F_STORE)
-
+        
         fir_store(&result_i, FIR_REG_RESULT_REGISTER);
-      //printf("Result [ %d ] = %lx ---> %lx\n", i, result_i, (uint8_t)((result_i >> (13 * 4))));
-     // printf("Result [ %d ] = 0x%lx   ---->> décalée = 0x%lx \n", i, result_i, (uint8_t)(((result_i >> (4 * 3))) ));
-
         *(pt_out_data + i) = (uint8_t)(((result_i >> (4 * 3))) );
 
+        // delay for spike
         volatile int j = 200;
         while(j--);
-
-    // //    printf("\n*** FIR operation COMPLETED -- Result[ %d ] = 0x%x \n", i, result_i);
-
     }
 
     // TESTING DIFFERENT STATUS REGISTER VALUES
