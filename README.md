@@ -1,9 +1,8 @@
-<<<<<<< HEAD
-#/*======================================================================*/
-#/* TIMA LABORATORY                                                      */
-#/*======================================================================*/
-Projet 1
+TIMA LABORATORY                
+Spike with signal and image visual presentation                      
+noureddine-as
 
-=======
-# spike-monitor-demo
->>>>>>> 20befe5b4730deb6890d9c39731c9c691f77ad4b
+Can work with a modified version of Spike (CVPlot (and OpenCV) + FIR instructions support)
+https://github.com/noureddine-as/riscv-isa-sim/tree/visual-spike-v2-rocc-fir
+
+![Test preview](./test-random-sinus.png)
