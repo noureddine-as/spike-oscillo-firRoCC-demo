@@ -115,6 +115,11 @@
 #define F_MOVE   0
 #define F_FIFO   1
 #define F_STORE   2
+#define F_3       3
+#define F_4       4
+#define F_5       5
+#define F_6       6
+#define F_7       7
 
 #define FIR_REG_PRECISION_REGISTER      32
 #define FIR_REG_STATUS_REGISTER         33
@@ -124,27 +129,61 @@
 #define FIR_ENABLE_INT  0x02
 #define FIR_DONE_BIT    (0x01 << 31)
 
+#define USE_HARDCODED 0
+
 void fir_move(uint64_t value, uint64_t reg_file)
 {
     //FIR_FX_INSTRUCTION(value, reg_file, F_MOVE);  
-    
-    uint64_t y;
-    ROCC_INSTRUCTION(0, y, value, reg_file, F_MOVE);  
+#if (USE_HARDCODED)
+  uint64_t y;
+  ROCC_INSTRUCTION(0, y, value, reg_file, F_MOVE);  
+#else
+  register unsigned long int rd_  asm ("x5");                                     
+  register unsigned long int rs1_ asm ("x6") = (unsigned long int)value;          
+  register unsigned long int rs2_ asm ("x7") = (unsigned long int)reg_file;          
+  asm volatile (                                                      
+      "fir.move %[_rd], %[_rs1], %[_rs2]\n\t"      
+      : [_rd] "=r" (rd_)                                                    
+      : [_rs1] "r" (rs1_), [_rs2] "r" (rs2_)                          
+      : "cc"                                                          
+      ); 
+#endif  
 }
 
 void fir_fifo(uint64_t value)
 {
-    //FIR_FX_INSTRUCTION(value, 0, F_FIFO);
-
-    uint64_t y;
-    ROCC_INSTRUCTION(0, y, value, 0, F_FIFO);  
+#if (USE_HARDCODED)
+  uint64_t y;
+  ROCC_INSTRUCTION(0, y, value, 0, F_FIFO);  
+#else
+  register unsigned long int rd_  asm ("x5");                                     
+  register unsigned long int rs1_ asm ("x6") = (unsigned long int)value;          
+  register unsigned long int rs2_ asm ("x7") = (unsigned long int)0;          
+  asm volatile (                                                      
+      "fir.fifo.push %[_rd], %[_rs1], %[_rs2]\n\t"      
+      : [_rd] "=r" (rd_)                                                    
+      : [_rs1] "r" (rs1_), [_rs2] "r" (rs2_)                          
+      : "cc"                                                          
+      ); 
+#endif  
 }
 
 void fir_store(volatile uint64_t* addr, uint64_t reg_file)
 {
-    //FIR_FX_INSTRUCTION(addr, reg_file, F_STORE);
-    uint64_t y;
-    ROCC_INSTRUCTION(0, y, addr, reg_file, F_STORE);  
+#if (USE_HARDCODED)
+  uint64_t y;
+  ROCC_INSTRUCTION(0, y, addr, reg_file, F_STORE); 
+#else
+  register unsigned long int rd_  asm ("x5");                                     
+  register unsigned long int rs1_ asm ("x6") = (unsigned long int)addr;          
+  register unsigned long int rs2_ asm ("x7") = (unsigned long int)reg_file;          
+  asm volatile (                                                      
+      "fir.store %[_rd], %[_rs1], %[_rs2]\n\t"      
+      : [_rd] "=r" (rd_)                                                    
+      : [_rs1] "r" (rs1_), [_rs2] "r" (rs2_)                          
+      : "cc"                                                          
+      ); 
+#endif 
 }
 
 #endif  // FIR_FX_H_

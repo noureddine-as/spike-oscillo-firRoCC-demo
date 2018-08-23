@@ -1,3 +1,10 @@
+/*======================================================================*/
+/* TIMA LABORATORY                                                      */
+/* Spike with signal and image visual presentation                      */ 
+/* noureddine-as                                                        */
+/* noureddine.aitsaid0@gmail.com                                        */
+/*======================================================================*/
+
 # This is the assembly file generated for INPUT signal 
   .section ".oscillo","aw",@progbits 
 # Input signal samples 

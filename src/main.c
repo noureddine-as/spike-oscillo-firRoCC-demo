@@ -1,11 +1,14 @@
 /*======================================================================*/
 /* TIMA LABORATORY                                                      */
+/* Spike with signal and image visual presentation                      */ 
+/* noureddine-as                                                        */
+/* noureddine.aitsaid0@gmail.com                                        */
 /*======================================================================*/
+
 #include "encoding.h"
 #include "util.h"
 #include "FIR_COEFFS.h"
 #include "fir_insns.h"
-//#include "in_signal.h"
 
 void init_csrs()
 {
@@ -25,8 +28,6 @@ void init_csrs()
 }
 
 #define OSCILLO_BASE 0x82000000
-
-
 
 int main()
 {
@@ -58,7 +59,7 @@ int main()
     volatile uint64_t result_i, done;
     for(int i = 0; i < *pt_in_n_rows; i++)
     {       
-        fir_fifo(((uint64_t)(*(pt_in_data  + i ))) << (16 * 3)); // */);
+        fir_fifo(((uint64_t)(*(pt_in_data  + i ))) << (16 * 3));
         fir_move(FIR_ENABLE_CALC , FIR_REG_STATUS_REGISTER);
         fir_store(&done, FIR_REG_STATUS_REGISTER);
         while(!(done & 0x8000000000000000)){
@@ -68,25 +69,12 @@ int main()
         fir_store(&result_i, FIR_REG_RESULT_REGISTER);
         *(pt_out_data + i) = (uint8_t)(((result_i >> (4 * 3))) );
 
+
+        //printf("Result [ %d ] = 0x%lx ---> 0x%x \n", i, result_i, (uint8_t)(((result_i >> (4 * 3))) ));
         // delay for spike
         volatile int j = 200;
         while(j--);
     }
+        return 0;
 
-    // TESTING DIFFERENT STATUS REGISTER VALUES
-    
-
-    // This enables the INTerrupt of the FIR !
-    // Meaning that if the interrupt has been enabled, once done if the calc is done
-    // an interrupt should be launched !
-       // FIR_FX_INSTRUCTION(FIR_ENABLE_INT, FIR_REG_STATUS_REGISTER, F_MOVE);
-
-    // Writing to calc executes the FIR operation and turns the done bit ON and disables ENABLE bit !
-       // FIR_FX_INSTRUCTION(FIR_ENABLE_CALC, FIR_REG_STATUS_REGISTER, F_MOVE);
-
-    // Writing to Done is prohibited this should provoke an illegal instruction trap!
-       // FIR_FX_INSTRUCTION(FIR_DONE_BIT, FIR_REG_STATUS_REGISTER, F_MOVE);
-
-
-    return 0;
 }
